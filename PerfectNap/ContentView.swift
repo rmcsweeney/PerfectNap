@@ -4,23 +4,30 @@
 //
 //  Created by Ryan McSweeney on 1/18/23.
 //  Sources used:
-//
+//  For notifications https://stackoverflow.com/questions/68191982/swiftui-ask-notification-permission-on-start-without-button
 
 import SwiftUI
 import NotificationCenter
 
 struct ContentView: View {
+    let center = UNUserNotificationCenter.current()
+    let sleepContent = UNMutableNotificationContent()
+    let wakeContent = UNMutableNotificationContent()
     
     
     //Set timer interval "every" and tolerance (tolerance at 1/10 good for preserving device power)
-    let timer  = Timer.publish(every: 600, tolerance: 60, on: .main, in: .common).autoconnect()
+    let timer  = Timer.publish(every: 300, tolerance: 30, on: .main, in: .common).autoconnect()
+    let every = 5 //every as minutes
     
-    
-    
+    let fallAsleepReload = 5
     //State variables for hours/minutes on UI and determined falling asleep check timer
     @State private var hours = 0
     @State private var minutes = 0
-    @State private var sleepCheck = 0
+    @State private var fallAsleepTime = 0
+    @State private var alarmTime = 0
+    
+    //unimplemented
+    @State private var authorized = true
     
     enum userState {
         case idle
@@ -31,7 +38,25 @@ struct ContentView: View {
     
     @State private var userStatus = userState.idle
     
-    
+    init() {
+        center.requestAuthorization(options: [.sound, .alert, .badge], completionHandler: { (granted, error) in
+            if let error = error{
+                print("Error in authorization: " + error.localizedDescription)
+            }
+            if (!granted){
+                print("Access not granted.")
+            }
+        })
+        
+        sleepContent.title = "Still awake?"
+        sleepContent.body = "Tap here"
+        sleepContent.sound = UNNotificationSound.default
+        
+        wakeContent.title = "Wake up!"
+        wakeContent.body = "Alarm running"
+        wakeContent.sound = UNNotificationSound.defaultRingtone
+        
+    }
         
     var body: some View {
         ZStack{
@@ -66,11 +91,14 @@ struct ContentView: View {
                     Text("Cancel sleep process")
                 }.opacity(userStatus==userState.fallingAsleep ? 0:1)
                     .disabled(!(userStatus==userState.fallingAsleep))
+                Text("Notifications not authorized!")
+                    .opacity(authorized ? 0:1)
             }.padding()
         }
     }
     
     func beginSleep(){
+        fallAsleepTime = fallAsleepReload
         userStatus = userState.fallingAsleep
     }
     
@@ -83,19 +111,35 @@ struct ContentView: View {
         case .idle:
             userStatus = userState.idle
         case .fallingAsleep:
-            if (sleepCheck > 0){
-                
+            if (fallAsleepTime > 0){
+                fallAsleepTime -= every
             }
             else{
-                
+                notifyCheckSleeping()
             }
         case .asleep:
-            <#code#>
+            if (alarmTime > 0){
+                alarmTime -= every
+            }
+            else{
+                notifyWakeUp()
+                userStatus = userState.wakeUp
+            }
         case .wakeUp:
-            <#code#>
+            notifyWakeUp()
         }
     }
     
+    
+    func notifyCheckSleeping(){
+        let sleepRequest = UNNotificationRequest(identifier: UUID().uuidString, content: sleepContent, trigger: nil)
+        center.add(sleepRequest)
+    }
+    
+    func notifyWakeUp(){
+        let wakeUpRequest = UNNotificationRequest(identifier: UUID().uuidString, content: wakeContent, trigger: nil)
+        center.add(wakeUpRequest)
+    }
     
 }
 
