@@ -11,6 +11,7 @@
 		91A1078F2978C31400513F05 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A1078E2978C31400513F05 /* ContentView.swift */; };
 		91A107912978C31400513F05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91A107902978C31400513F05 /* Assets.xcassets */; };
 		91A107942978C31400513F05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91A107932978C31400513F05 /* Preview Assets.xcassets */; };
+		91A1079F297DE12400513F05 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A1079E297DE12400513F05 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,7 @@
 		91A107932978C31400513F05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		91A1079A297C7B2300513F05 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		91A1079B297C809E00513F05 /* PerfectNap.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PerfectNap.entitlements; sourceTree = "<group>"; };
+		91A1079E297DE12400513F05 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 				91A1078E2978C31400513F05 /* ContentView.swift */,
 				91A107902978C31400513F05 /* Assets.xcassets */,
 				91A107922978C31400513F05 /* Preview Content */,
+				91A1079E297DE12400513F05 /* AppDelegate.swift */,
 			);
 			path = PerfectNap;
 			sourceTree = "<group>";
@@ -141,6 +144,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91A1079F297DE12400513F05 /* AppDelegate.swift in Sources */,
 				91A1078F2978C31400513F05 /* ContentView.swift in Sources */,
 				91A1078D2978C31400513F05 /* PerfectNapApp.swift in Sources */,
 			);

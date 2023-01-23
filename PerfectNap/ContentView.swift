@@ -24,14 +24,13 @@ struct ContentView: View {
     
     let center = UNUserNotificationCenter.current()
     
-
     
     
     //Set timer interval "every" and tolerance (tolerance at 1/10 good for preserving device power)
-    let timer  = Timer.publish(every: 3, tolerance: 3, on: .main, in: .common).autoconnect()
+    //let timer  = Timer.publish(every: 3, tolerance: 3, on: .main, in: .common).autoconnect()
     let every = 5 //every as minutes
     
-    let fallAsleepReload = 5
+    let fallAsleepReload = DEBUG ? 5 : 5 * 60
     //State variables for hours/minutes on UI and determined falling asleep check timer
     @State private var hours = 0
     @State private var minutes = 0
@@ -69,6 +68,7 @@ struct ContentView: View {
         
         sleepContent.title = "Still awake?"
         sleepContent.body = "Tap here"
+        //TODO: make vibrate (silent sound)
         sleepContent.sound = UNNotificationSound.default
         sleepContent.categoryIdentifier = "ALARM_ACTION"
         
@@ -109,19 +109,32 @@ struct ContentView: View {
                     .disabled(!(userStatus==userState.idle))
                 Button(action: resetSleep){
                     Text("Cancel sleep process")
-                }.opacity(userStatus==userState.fallingAsleep ? 0:1)
+                }.opacity(userStatus==userState.fallingAsleep ? 1:0)
                     .disabled(!(userStatus==userState.fallingAsleep))
-                Text("Notifications not authorized!")
-                    .opacity(authorized ? 0:1)
-            }.padding()
-            
-            if (DEBUG){
+                Button(action: resetSleep){
+                    Text("Turn off Alarm")
+                }.opacity(userStatus==userState.wakeUp ? 1:0)
+                    .disabled(!(userStatus==userState.wakeUp))
                 HStack{
                     Button(action: notifyCheckSleeping){
                         Text("Test sleepcheck")
                     }
-                }
-            }
+                    Button(action: notifyWakeUp){
+                        Text("Test snooze/alarm")
+                    }
+                }.disabled(!DEBUG)
+            }.padding()
+        }
+    }
+    
+    struct FallingAsleepView : View {
+        var body: some View {
+            VStack{
+                Text("You are drifting off to sleep...").padding()
+                /*Button(){
+                    Text("Stop the process")
+                }*/
+            }.padding()
         }
     }
     
@@ -133,9 +146,10 @@ struct ContentView: View {
     
     func resetSleep(){
         userStatus = userState.idle
+        center.removeAllPendingNotificationRequests()
     }
-    
-    func timerHandler(){
+    //TODO: maybe reimplement timerHandler later for updating UI on per second interval
+    /*func timerHandler(){
         switch userStatus {
         case .idle:
             userStatus = userState.idle
@@ -151,23 +165,62 @@ struct ContentView: View {
                 alarmTime -= every
             }
             else{
-                notifyWakeUp()
+                notifyWakeUp(snooze: false)
                 userStatus = userState.wakeUp
             }
         case .wakeUp:
-            notifyWakeUp()
+            notifyWakeUp(snooze: true)
         }
+    } */
+    
+    func resetIdle(){
+        userStatus = userState.idle
     }
     
-    
     func notifyCheckSleeping(){
-        let sleepRequest = UNNotificationRequest(identifier: UUID().uuidString, content: sleepContent, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false))
+        let sleepRequest = UNNotificationRequest(identifier: UUID().uuidString, content: sleepContent, trigger: UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(fallAsleepReload), repeats: false))
         UNUserNotificationCenter.current().add(sleepRequest)
+        userStatus = userState.fallingAsleep
     }
     
     func notifyWakeUp(){
-        let wakeUpRequest = UNNotificationRequest(identifier: UUID().uuidString, content: wakeContent, trigger: UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(minutes * hours * 60), repeats: false))
-        center.add(wakeUpRequest)
+        notifyWakeUp(snooze: true)
+    }
+    
+    func notifyWakeUp(snooze: Bool){
+        if (DEBUG){
+            let wakeUpRequest = UNNotificationRequest(identifier: UUID().uuidString, content: wakeContent, trigger: UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(snooze ? 5 : 10), repeats: false))
+            center.add(wakeUpRequest)
+        }
+        else{
+            let wakeUpRequest = UNNotificationRequest(identifier: UUID().uuidString, content: wakeContent, trigger: UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(snooze ? 5 * 60 : minutes * 60 + hours * 60 * 60), repeats: false))
+            center.add(wakeUpRequest)
+        }
+        userStatus = userState.wakeUp
+    }
+    
+    //TODO: implement handling
+    func handleAlarm(response: UNNotificationResponse){
+        switch response.actionIdentifier {
+            case "SNOOZE":
+                userStatus = userState.asleep
+                notifyWakeUp(snooze: true)
+                break
+                
+            case "ALARM_OFF":
+                userStatus = userState.idle
+                break
+                
+            case UNNotificationDefaultActionIdentifier,
+                UNNotificationDismissActionIdentifier:
+                userStatus = userState.wakeUp
+                notifyWakeUp(snooze: true)
+                break
+                
+            default:
+                break
+      }
+        return
     }
     
 }
@@ -177,3 +230,5 @@ struct ContentView_Previews: PreviewProvider {
         ContentView().preferredColorScheme(.none)
     }
 }
+
+
